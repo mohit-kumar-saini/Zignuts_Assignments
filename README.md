@@ -59,10 +59,10 @@ python manage.py runserver
 
 ## 📸 Outputs / Screenshots
 
-![I](outputs/Screenshot 2025-09-24 125453.png)
+![I](outputs/IV.png)
 
-![II](outputs/Screenshot 2025-09-24 125501.png)
+![II](outputs/III.png)
 
-![III](outputs/Screenshot 2025-09-24 130919m.png)
+![III](outputs/II.png)
 
-![IV](outputs/Screenshot 2025-09-24 131028.png)
+![IV](outputs/I.png)

@@ -1,7 +1,7 @@
 # Django Blog Project – Session 8.1 Minor Project
 
-This is the **Session 8.1 Minor Project** developed as part of my internship learning path at Zignuts.  
-It is a simple blog application built using **Django** that demonstrates authentication, CRUD operations, and basic web development concepts.
+- This is the **Session 8.1 Minor Project** developed as part of my internship learning path at Zignuts. 
+- It is a simple blog application built using **Django** that demonstrates authentication, CRUD operations, and basic web development concepts.
 
 ---
 
@@ -69,5 +69,5 @@ python manage.py runserver
 
 ## 👤 Author:
 
-Mohit Kumar Saini
-Intern – Zignuts Technolab Pvt. Ltd.
+- Mohit Kumar Saini
+- Intern – Zignuts Technolab Pvt. Ltd.

@@ -41,6 +41,11 @@ python manage.py runserver
 ```
 ## Server runs at 👉 http://127.0.0.1:8000/
 
+6. Run tests:
+   ```bash
+   python manage.py test
+   ```
+
 ## 🔐 Authentication (JWT):
 
 1. Register

@@ -66,7 +66,7 @@ python manage.py runserver
 }
 
 - Use Bearer token in requests
-## Authorization: Bearer <access_token
+## Authorization: Bearer <access_token>
 
 ## 📸 Screenshots:
 ![I](outputs/I.png)

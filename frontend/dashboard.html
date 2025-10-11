@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard - TaskPro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>Your Tasks</h2>
+      <div>
+        <button id="logout" class="btn btn-outline-secondary">Logout</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-5">
+        <h5 id="formTitle">Add Task</h5>
+        <form id="taskForm">
+          <input type="hidden" id="taskId">
+          <div class="mb-3">
+            <label>Title</label>
+            <input class="form-control" id="title" required>
+          </div>
+          <div class="mb-3">
+            <label>Description</label>
+            <textarea class="form-control" id="description"></textarea>
+          </div>
+          <div class="mb-3">
+            <label>Priority</label>
+            <select id="priority" class="form-control">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label>Due Date</label>
+            <input type="date" id="due_date" class="form-control">
+          </div>
+          <button class="btn btn-primary" id="saveBtn">Save</button>
+          <div id="formMsg" class="mt-2"></div>
+        </form>
+      </div>
+
+      <div class="col-md-7">
+        <div class="mb-3 d-flex">
+          <input id="search" class="form-control me-2" placeholder="Search title...">
+          <select id="filterStatus" class="form-control me-2">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+          <select id="filterPriority" class="form-control">
+            <option value="">Any priority</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <ul class="list-group" id="taskList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const API = '/api/tasks/';
+  function authHeaders() {
+    const token = localStorage.getItem('access');
+    return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token };
+  }
+
+  document.getElementById('logout').addEventListener('click', () => {
+    localStorage.removeItem('access'); localStorage.removeItem('refresh');
+    window.location.href = '/';
+  });
+
+  async function loadTasks() {
+    let url = API + '?ordering=due_date';
+    const s = document.getElementById('search').value;
+    const status = document.getElementById('filterStatus').value;
+    const priority = document.getElementById('filterPriority').value;
+    if(s) url += '&search=' + encodeURIComponent(s);
+    if(status) url += '&status=' + status;
+    if(priority) url += '&priority=' + priority;
+    const res = await fetch(url, { headers: authHeaders() });
+    if(res.status === 401) { window.location.href = '/login/'; return; }
+    const tasks = await res.json();
+    const el = document.getElementById('taskList');
+    el.innerHTML = '';
+    tasks.forEach(t => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-start';
+      li.innerHTML = `
+        <div>
+          <div class="fw-bold">${t.title} <small class="text-muted">(${t.priority})</small></div>
+          <div>${t.description || ''}</div>
+          <div><small>Due: ${t.due_date || '—'}</small></div>
+        </div>
+        <div>
+          ${t.status === 'pending' ? '<button class="btn btn-sm btn-success me-1" data-action="complete">Complete</button>' : ''}
+          <button class="btn btn-sm btn-secondary me-1" data-action="edit">Edit</button>
+          <button class="btn btn-sm btn-danger" data-action="delete">Delete</button>
+        </div>
+      `;
+      li.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const action = btn.getAttribute('data-action');
+          if(action === 'complete') {
+            await fetch(API + t.id + '/mark_complete/', { method:'POST', headers: authHeaders() });
+            loadTasks();
+          } else if(action === 'edit') {
+            document.getElementById('taskId').value = t.id;
+            document.getElementById('title').value = t.title;
+            document.getElementById('description').value = t.description;
+            document.getElementById('priority').value = t.priority;
+            document.getElementById('due_date').value = t.due_date || '';
+            document.getElementById('formTitle').innerText = 'Edit Task';
+          } else if(action === 'delete') {
+            if(confirm('Delete this task?')) {
+              await fetch(API + t.id + '/', { method:'DELETE', headers: authHeaders() });
+              loadTasks();
+            }
+          }
+        });
+      });
+      el.appendChild(li);
+    });
+  }
+
+  document.getElementById('taskForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('taskId').value;
+    const payload = {
+      title: document.getElementById('title').value,
+      description: document.getElementById('description').value,
+      priority: document.getElementById('priority').value,
+      due_date: document.getElementById('due_date').value || null
+    };
+    let method = 'POST', url = API;
+    if(id) { method = 'PUT'; url = API + id + '/'; }
+    const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
+    if(res.ok) {
+      document.getElementById('formMsg').innerHTML = '<div class="alert alert-success">Saved</div>';
+      document.getElementById('taskForm').reset();
+      document.getElementById('taskId').value = '';
+      document.getElementById('formTitle').innerText = 'Add Task';
+      loadTasks();
+    } else {
+      const txt = await res.text();
+      document.getElementById('formMsg').innerHTML = '<div class="alert alert-danger">Error: ' + txt + '</div>';
+    }
+  });
+
+  document.getElementById('search').addEventListener('input', loadTasks);
+  document.getElementById('filterStatus').addEventListener('change', loadTasks);
+  document.getElementById('filterPriority').addEventListener('change', loadTasks);
+
+  // initial
+  (async function(){
+    const token = localStorage.getItem('access');
+    if(!token) { window.location.href = '/login/'; return; }
+    await loadTasks();
+  })();
+  </script>
+</body>
+</html>
